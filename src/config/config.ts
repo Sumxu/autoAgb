@@ -5,6 +5,6 @@ const config = {
    type:0,//0 间隔多少秒 1每分钟的多少秒
    sec:180, //
    initInviter:'', //绑定邀请人
-   wallets:[''],//私钥地址列表
+   wallets:[''],//私钥地址列表  
 };
 export default config;

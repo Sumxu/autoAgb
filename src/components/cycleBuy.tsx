@@ -58,7 +58,6 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
   };
   // 更新钱包
   const updateWallet = (index: number, value: string) => {
-    console.log("value==", value);
     try {
       // 1️⃣ 校验私钥（非法直接跳出）
       // 3️⃣ 更新私钥列表
@@ -132,18 +131,15 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
       const wallet = new ethers.Wallet(configObject.wallets[nextId], provider);
       const contract = new ethers.Contract(stakeAddress, abi, wallet);
       let maxStakeAmount = await contract.maxStakeAmount();
-      console.log("maxStakeAmount,", maxStakeAmount);
 
       if (!runningRef.current) return;
       if (maxStakeAmount > configObject.maxAmount) {
         maxStakeAmount = configObject.maxAmount;
       }
       const ranDom = Math.random();
-      if (maxStakeAmount > configObject.minAmount) {
-        const depositAmount = (
-          ranDom * (maxStakeAmount - configObject.minAmount) +
-          configObject.minAmount
-        ).toFixed(0);
+      if (maxStakeAmount >=configObject.minAmount) {
+         const amount= ranDom * (maxStakeAmount - configObject.minAmount) + configObject.minAmount
+        const depositAmount =  Number(amount).toFixed(0)
         appendLog("抢购中", wallet.address, `抢购金额${depositAmount}`);
         const tx = await contract.deposit(
           configObject.days,
@@ -156,7 +152,7 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
         nextId++;
       }
     } catch (e) {
-      console.log("e=---", e);
+      console.log("e--",e)
       appendLog("❌ 抢购失败", e);
     }
     // ⏱️ 下一次执行

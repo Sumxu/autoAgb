@@ -88,7 +88,7 @@ const Redeem = forwardRef(({ privateKeyList }: RedeemProps, ref) => {
     contract: Contract,
     address: string
   ) => {
-    const tx = await contract.withdraw(holdId, address);
+    const tx = await contract.withdraw(holdId);
     await tx.wait();
   };
 
