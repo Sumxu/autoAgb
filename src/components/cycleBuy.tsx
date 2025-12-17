@@ -1,15 +1,22 @@
 import "@/pages/Home/index.scss";
 import React, { useEffect, useState } from "react";
 import config from "@/config/config";
-// import abi from "@/Contract/ABI/abi";
-import { ethers } from "ethers";
-import { Input, Button, Space, Radio, Toast } from "antd-mobile";
+import { ethers, formatEther } from "ethers";
+import { Input, Button, Space, Radio, Toast, Picker } from "antd-mobile";
 interface CycleBuyProps {
   onDataChange: (data: any) => void;
   redeemChange: (data: any) => void;
 }
 
 const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
+  const basicColumns = [
+    [
+      { label: "1天", value: "0" },
+      { label: "15天", value: "1" },
+      { label: "30天", value: "2" },
+    ],
+  ];
+
   const provider = new ethers.JsonRpcProvider(
     "https://bsc.blockrazor.xyz/1915635065170173952",
     56
@@ -40,6 +47,9 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
   const [privateKeyList, setPrivateKeyList] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [startupLoading, setStartupLoading] = useState<boolean>(false);
+  const [maxStakeAmountStr, setMaxStakeAmountStr] = useState<bigint>(0n);
+  const [pickerVisible, setPickerVisible] = useState<boolean>(false);
+  const [pickerValue, setPickerValue] = useState<(string | null)[]>(["0"]);
   // 封装日志方法
   const appendLog = (...msg: any[]) => {
     const text = msg
@@ -131,15 +141,17 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
       const wallet = new ethers.Wallet(configObject.wallets[nextId], provider);
       const contract = new ethers.Contract(stakeAddress, abi, wallet);
       let maxStakeAmount = await contract.maxStakeAmount();
-
+      setMaxStakeAmountStr(maxStakeAmount);
       if (!runningRef.current) return;
       if (maxStakeAmount > configObject.maxAmount) {
         maxStakeAmount = configObject.maxAmount;
       }
       const ranDom = Math.random();
-      if (maxStakeAmount >=configObject.minAmount) {
-         const amount= ranDom * (maxStakeAmount - configObject.minAmount) + configObject.minAmount
-        const depositAmount =  Number(amount).toFixed(0)
+      if (maxStakeAmount >= configObject.minAmount) {
+        const amount =
+          ranDom * (maxStakeAmount - configObject.minAmount) +
+          configObject.minAmount;
+        const depositAmount = Number(amount).toFixed(0);
         appendLog("抢购中", wallet.address, `抢购金额${depositAmount}`);
         const tx = await contract.deposit(
           configObject.days,
@@ -152,7 +164,7 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
         nextId++;
       }
     } catch (e) {
-      console.log("e--",e)
+      console.log("e--", e);
       appendLog("❌ 抢购失败", e);
     }
     // ⏱️ 下一次执行
@@ -178,6 +190,10 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
     appendLog("Startup地址绑定检查结束");
     cycleBuy(0);
   }
+  const pickerConfirm = (v) => {
+    updateField("days", v[0]);
+    setPickerValue(v);
+  };
   useEffect(() => {
     onDataChange(privateKeyList);
   }, [privateKeyList]);
@@ -185,11 +201,16 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
     <div className="home-page-box">
       <div style={{ padding: 8 }}>
         <h3>天数(0/1/2 表示 1天/15天/30天 )</h3>
-        <Input
-          value={configObject.days}
-          onChange={(v) => updateField("days", v)}
-          placeholder="请输入天数"
-        />
+        <span
+          className="adm-input-element spnOption"
+          onClick={() => setPickerVisible(true)}
+        >
+          {basicColumns[0][configObject.days].label}
+        </span>
+        <h3>最大购买金额</h3>
+        <span className="adm-input-element spnOption">
+          {formatEther(maxStakeAmountStr)}
+        </span>
         <h3>最小投入金额</h3>
         <Input
           value={configObject.minAmount}
@@ -297,6 +318,18 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
           <div key={i}>{l}</div>
         ))}
       </div>
+
+      <Picker
+        columns={basicColumns}
+        visible={pickerVisible}
+        onClose={() => {
+          setPickerVisible(false);
+        }}
+        value={pickerValue}
+        onConfirm={(v) => {
+          pickerConfirm(v);
+        }}
+      />
     </div>
   );
 };
