@@ -27,6 +27,7 @@ const Redeem = forwardRef(({ privateKeyList }: RedeemProps, ref) => {
 
   // 核心赎回方法
   const startUp = async () => {
+    console.log("privateKeyList==",privateKeyList)
     for (let i = 0; i < privateKeyList.length; i++) {
       const wallet = new Wallet(privateKeyList[i], provider);
       const contract = new Contract(stakeAddress, stakeAbi, wallet);

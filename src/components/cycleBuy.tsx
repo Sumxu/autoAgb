@@ -2,7 +2,15 @@ import "@/pages/Home/index.scss";
 import React, { useEffect, useState } from "react";
 import config from "@/config/config";
 import { ethers, formatEther } from "ethers";
-import { Input, Button, Space, Radio, Toast, Picker } from "antd-mobile";
+import {
+  Input,
+  Button,
+  Space,
+  Radio,
+  Toast,
+  Picker,
+  TextArea,
+} from "antd-mobile";
 interface CycleBuyProps {
   onDataChange: (data: any) => void;
   redeemChange: (data: any) => void;
@@ -50,6 +58,7 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
   const [maxStakeAmountStr, setMaxStakeAmountStr] = useState<bigint>(0n);
   const [pickerVisible, setPickerVisible] = useState<boolean>(false);
   const [pickerValue, setPickerValue] = useState<(string | null)[]>(["0"]);
+  const [walletsInputs, setWalletsInputs] = useState<string>("");
   // 封装日志方法
   const appendLog = (...msg: any[]) => {
     const text = msg
@@ -80,7 +89,6 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
       // 私钥非法，什么都不做 or 给提示
       return Toast.show("请粘贴正确的私钥");
     }
-
     const newWallets = [...configObject.wallets];
     newWallets[index] = value;
     setConfigObject((prev) => ({ ...prev, wallets: newWallets }));
@@ -95,9 +103,31 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
     setPrivateKeyList((prev) => [...prev, ""]);
   };
 
+  function stringToArray(input: string | string[]): string[] {
+    // 如果已经是数组，直接返回
+    if (Array.isArray(input)) return input;
+
+    if (!input) return [];
+
+    return (
+      input
+        .trim()
+        // 按 空格 / 逗号 / 中文逗号 拆分
+        .split(/[\s,，]+/)
+        .filter(Boolean)
+    );
+  }
+  const textAreachange = (v) => {
+    const wallets = stringToArray(v);
+    setWalletsInputs(v);
+    setPrivateKeyList(wallets);
+    setConfigObject((prev) => ({
+      ...prev,
+      wallets: wallets,
+    }));
+  };
   const handleUpdateConfig = async () => {
     if (runningRef.current) return;
-
     runningRef.current = true;
     setStartupLoading(true);
 
@@ -106,7 +136,6 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
   const closeConfig = () => {
     runningRef.current = false;
     setStartupLoading(false);
-
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -252,36 +281,22 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
           onChange={(v) => updateField("initInviter", v)}
           placeholder="请输入绑定邀请人"
         />
-        <h4>私钥列表</h4>
-        {configObject.wallets.map((w, idx) => (
-          <Space key={idx} align="center" style={{ width: "100%" }}>
-            <Input
-              value={w}
-              onChange={(v) => updateWallet(idx, v)}
-              placeholder={`私钥列表 ${idx + 1}`}
-              className="inputWalletsOption"
-            />
-            <Button
-              color="danger"
-              size="small"
-              className="delBtn"
-              onClick={() => {
-                const newWallets = configObject.wallets.filter(
-                  (_, index) => index !== idx
-                );
-                setConfigObject((prev) => ({
-                  ...prev,
-                  wallets: newWallets,
-                }));
-              }}
-            >
-              删除
-            </Button>
-          </Space>
-        ))}
-        <Button color="primary" onClick={addWallet}>
+        <h3>私钥列表使用,隔开案例(私钥地址,私钥地址)</h3>
+        <Space align="center" style={{ width: "100%" }}>
+          <TextArea
+            value={walletsInputs}
+            rows="20"
+            onChange={(v) => textAreachange(v)}
+            placeholder={`私钥列表`}
+            className="inputWalletsTextArea"
+            style={{
+              "--color": "#FFF",
+            }}
+          />
+        </Space>
+        {/* <Button color="primary" onClick={addWallet}>
           + 新增私钥
-        </Button>
+        </Button> */}
         <div className="fixedBottom">
           <Button
             color="success"
