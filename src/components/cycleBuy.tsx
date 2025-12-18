@@ -294,9 +294,6 @@ const CycleBuy: React.FC<CycleBuyProps> = ({ onDataChange, redeemChange }) => {
             }}
           />
         </Space>
-        {/* <Button color="primary" onClick={addWallet}>
-          + 新增私钥
-        </Button> */}
         <div className="fixedBottom">
           <Button
             color="success"
